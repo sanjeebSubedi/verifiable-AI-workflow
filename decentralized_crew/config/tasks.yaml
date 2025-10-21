@@ -1,0 +1,51 @@
+tasks:
+  source_and_validate_document:
+    description: >
+      1. Given the company '{company_name}', search for its most recent quarterly earnings report PDF.
+      2. Use SerperDevTool to find official sources like SEC EDGAR or company IR websites.
+      3. Use ScrapeWebsiteTool to extract direct PDF download links from these pages.
+      4. Use DownloadTool to download the PDF file to local storage and automatically calculate its SHA-256 hash.
+      5. Verify the authenticity of the document's source.
+    expected_output: >
+      A JSON object containing:
+      - 'local_file_path': The path to the saved PDF file
+      - 'source_url': The URL from which the document was downloaded
+      - 'input_data_hash': The calculated SHA-256 hash
+      - 'validation_summary': Confirmation of source authenticity
+    agent: sourcing_agent
+    verbose: True
+
+  analyze_document_and_generate_report:
+    description: >
+      1. Use the file path from the 'source_and_validate_document' task to access the validated PDF.
+      2. Use the PDF to Markdown OCR Tool to extract text and tables and save the output file to local storage.
+      3. Analyze the content of the output markdown file to identify key financial metrics (e.g., revenue, net income), perform sentiment analysis on management's discussion, and list any mentioned risks.
+      4. Synthesize all findings into a comprehensive, well-structured markdown report.
+    expected_output: >
+      A single, clean markdown string formatted as a final report. The report must include:
+      - A main title: "Financial Analysis Report: {company_name}".
+      - A section named "Key Financial Metrics" with a bulleted list of extracted figures.
+      - A section named "Sentiment Analysis" summarizing the tone.
+      - A section named "Identified Risks" with a bulleted list of potential risks.
+    agent: analyst_agent
+    context:
+      - source_and_validate_document
+
+  # certify_analysis_on_blockchain:
+  #   description: >
+  #     1. Retrieve the 'input_data_hash' from the output of the 'source_and_validate_document' task.
+  #     2. Retrieve the markdown report from the output of the 'analyze_document_and_generate_report' task.
+  #     3. Calculate the SHA-256 hash of the final markdown report to create the 'output_data_hash'.
+  #     4. Call the external blockchain service tool, passing it the 'input_data_hash' and 'output_data_hash'.
+  #     5. Receive the blockchain transaction ID from the tool after successful execution.
+  #   expected_output: >
+  #     A JSON object serving as the final, verifiable receipt. It must contain:
+  #     - 'status': A string, e.g., 'Success'.
+  #     - 'input_data_hash': The hash of the original document.
+  #     - 'analysis_output_hash': The hash of the generated report.
+  #     - 'blockchain_transaction_id': The transaction hash returned from the blockchain.
+  #     - 'notarization_timestamp': The ISO 8601 timestamp of when the certification was completed.
+  #   agent: notary_agent
+  #   context:
+  #     - source_and_validate_document
+  #     - analyze_document_and_generate_report
